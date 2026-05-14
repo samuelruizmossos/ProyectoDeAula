@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Inventario</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta http-equiv="X-UA compatible" content="IE=Edge">
+    <meta name="description" content="Página de tienda deportiva">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="shortcut icon" href="img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body_inventory">
+
+    <header class="header">
+        <div class="logo">
+            <img class="Logo" src="/img/logo.png" alt="header">
+            <div class="text">
+                <h2>Inventario Samuel</h2>
+                <span>Gestión Deportiva</span>
+            </div>
+        </div>
+        <nav>
+            <a href="PanelControl.html">Panel</a>
+            <a href="Inventory.html" class="nav-current">Inventario</a>
+            <a href="Procesos.html">Procesos</a>
+            <a href="Usuarios.html">Usuarios</a>
+        </nav>
+        <a href="Login.html">
+            <img class="out" src="/img/out.png" alt="Salir">
+        </a>
+    </header>
+
+    <div class="inv-section">
+
+        <div class="inv-topbar">
+            <div class="inv-search">
+                <input type="text" id="searchInput"
+                    placeholder="Buscar por nombre o ID..." oninput="filtrarTabla()">
+            </div>
+            <div class="inv-actions">
+                <button class="btn-outline" onclick="cargarProductos()">🔄 Recargar</button>
+                <button class="btn-outline" onclick="exportarCSV()">⬇ Exportar</button>
+                <button class="btn-primary" onclick="abrirModalNuevo()">+ Nuevo Producto</button>
+            </div>
+        </div>
+
+        <div id="apiMensaje" style="display:none;padding:12px 20px;border-radius:8px;
+            margin-bottom:10px;font-size:13px;"></div>
+
+        <div class="inv-table-wrapper">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>PRODUCTO</th>
+                        <th>TIPO</th>
+                        <th>CANTIDAD</th>
+                        <th>PRECIO</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProductos">
+                    <tr><td colspan="6" style="text-align:center;color:#828c9a;padding:30px;">
+                        ⏳ Cargando productos desde la API...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL — campos coinciden con Producto.java:
+         nombre, tipo, precio, cantidad                -->
+    <div class="proc-modal-overlay" id="modalProducto">
+        <div class="proc-modal">
+            <h3 id="modalTitulo">📦 Nuevo Producto</h3>
+            <p class="modal-sub" id="modalSub">Completa los datos del producto</p>
+
+            <input type="hidden" id="productoId">
+
+            <label>Nombre del producto</label>
+            <input type="text" id="prodNombre" placeholder="Ej: Balón Nike Premier">
+
+            <label>Tipo / Categoría</label>
+            <input type="text" id="prodTipo" placeholder="Ej: Fútbol, Calzado, Tenis...">
+
+            <label>Precio (COP)</label>
+            <input type="number" id="prodPrecio" placeholder="Ej: 120000" min="0">
+
+            <label>Cantidad (unidades)</label>
+            <input type="number" id="prodCantidad" placeholder="Ej: 45" min="0">
+
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-confirm-ent" onclick="guardarProducto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+    <!-- config.js PRIMERO -->
+    <script src="config.js"></script>
+    <script>
+        // Lista global con todos los productos de la API
+        let todosLosProductos = [];
+
+        window.onload = function () { cargarProductos(); };
+
+        // ── GET /api/productos ──────────────────────────────
+        // Campos que devuelve la API: id, nombre, tipo, precio, cantidad
+        async function cargarProductos() {
+            const tbody = document.getElementById("tablaProductos");
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#828c9a;padding:30px;">⏳ Cargando...</td></tr>';
+            try {
+                const resp = await fetch(API_URL + "/api/productos");
+                if (!resp.ok) throw new Error("Error " + resp.status);
+                const productos = await resp.json();
+                todosLosProductos = productos;
+                renderTabla(productos);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:30px;">
+                    ⚠️ No se pudo conectar con la API.<br>
+                    <span style="font-size:12px;color:#828c9a;">
+                        Verifica que el servidor Java esté corriendo en localhost:8080
+                    </span>
+                </td></tr>`;
+                mostrarApiMensaje("❌ " + error.message, "error");
+            }
+        }
+
+        // Dibuja la tabla usando los campos reales: nombre, tipo, precio, cantidad
+        function renderTabla(productos) {
+            const tbody = document.getElementById("tablaProductos");
+            tbody.innerHTML = "";
+            if (productos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#828c9a;padding:30px;">No hay productos registrados.</td></tr>';
+                return;
+            }
+            productos.forEach(function (p) {
+                // Usamos "cantidad" (no "stock") porque así está en tu modelo Producto.java
+                const cantClass   = p.cantidad > 10 ? "green"    : "yellow";
+                const estadoClass = p.cantidad > 10 ? "green-bg" : "yellow-bg";
+                const estadoTexto = p.cantidad > 10 ? "En Stock" : "Bajo Stock";
+                const precio      = Math.round(p.precio).toLocaleString("es-CO");
+
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>
+                        <div class="inv-product-info">
+                            <div class="inv-icon">📦</div>
+                            <div class="inv-details">
+                                <h4>${p.nombre}</h4>
+                                <span>ID: ${p.id}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="inv-badge category">${p.tipo || "—"}</span></td>
+                    <td class="inv-stock ${cantClass}">${p.cantidad}<br>unidades</td>
+                    <td class="inv-price">$${precio}<br><span>COP</span></td>
+                    <td><span class="inv-badge status ${estadoClass}">${estadoTexto}</span></td>
+                    <td>
+                        <span style="cursor:pointer;margin-right:8px;"
+                            onclick="abrirModalEditar(${p.id})" title="Editar">✏️</span>
+                        <span style="cursor:pointer;color:#ef4444;"
+                            onclick="eliminarProducto(${p.id})" title="Eliminar">🗑️</span>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+
+        function filtrarTabla() {
+            const texto = document.getElementById("searchInput").value.toLowerCase();
+            const filtrados = todosLosProductos.filter(p =>
+                p.nombre.toLowerCase().includes(texto) || String(p.id).includes(texto)
+            );
+            renderTabla(filtrados);
+        }
+
+        function exportarCSV() {
+            if (todosLosProductos.length === 0) { mostrarToast("⚠️ No hay productos para exportar"); return; }
+            let csv = "ID,Nombre,Tipo,Precio,Cantidad\n";
+            todosLosProductos.forEach(p => {
+                csv += `${p.id},"${p.nombre}","${p.tipo}",${p.precio},${p.cantidad}\n`;
+            });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+            a.download = "inventario.csv";
+            a.click();
+        }
+
+        // ── MODAL NUEVO ─────────────────────────────────────
+        function abrirModalNuevo() {
+            document.getElementById("modalTitulo").textContent = "📦 Nuevo Producto";
+            document.getElementById("modalSub").textContent    = "Los datos se envían a la API al guardar";
+            document.getElementById("productoId").value  = "";
+            document.getElementById("prodNombre").value  = "";
+            document.getElementById("prodTipo").value    = "";
+            document.getElementById("prodPrecio").value  = "";
+            document.getElementById("prodCantidad").value = "";
+            document.getElementById("modalProducto").classList.add("active");
+        }
+
+        // ── MODAL EDITAR — GET /api/productos/{id} ───────────
+        async function abrirModalEditar(id) {
+            try {
+                const resp = await fetch(API_URL + "/api/productos/" + id);
+                if (!resp.ok) throw new Error("No se encontró ID: " + id);
+                const p = await resp.json();
+                document.getElementById("modalTitulo").textContent  = "✏️ Editar Producto (ID: " + id + ")";
+                document.getElementById("modalSub").textContent     = "Modifica los campos y guarda";
+                document.getElementById("productoId").value   = p.id;
+                document.getElementById("prodNombre").value   = p.nombre;
+                document.getElementById("prodTipo").value     = p.tipo;
+                document.getElementById("prodPrecio").value   = p.precio;
+                document.getElementById("prodCantidad").value = p.cantidad;
+                document.getElementById("modalProducto").classList.add("active");
+            } catch (e) { mostrarToast("❌ " + e.message); }
+        }
+
+        function cerrarModal() { document.getElementById("modalProducto").classList.remove("active"); }
+
+        // ── POST /api/productos  ó  PUT /api/productos/{id} ──
+        // Enviamos los campos que define ProductoDTO / Producto.java:
+        // { nombre, tipo, precio, cantidad }
+        async function guardarProducto() {
+            const id       = document.getElementById("productoId").value;
+            const nombre   = document.getElementById("prodNombre").value.trim();
+            const tipo     = document.getElementById("prodTipo").value.trim();
+            const precio   = document.getElementById("prodPrecio").value;
+            const cantidad = document.getElementById("prodCantidad").value;
+
+            if (!nombre)              { mostrarToast("⚠️ El nombre es obligatorio"); return; }
+            if (!precio || precio<0)  { mostrarToast("⚠️ Ingresa un precio válido"); return; }
+            if (!cantidad || cantidad<0) { mostrarToast("⚠️ Ingresa una cantidad válida"); return; }
+
+            const datos = {
+                nombre:   nombre,
+                tipo:     tipo || "General",
+                precio:   parseFloat(precio),
+                cantidad: parseInt(cantidad)
+            };
+
+            try {
+                const url    = id === "" ? API_URL + "/api/productos" : API_URL + "/api/productos/" + id;
+                const metodo = id === "" ? "POST" : "PUT";
+                const resp   = await fetch(url, {
+                    method:  metodo,
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify(datos)
+                });
+                if (!resp.ok) { const t = await resp.text(); throw new Error(t); }
+                cerrarModal();
+                mostrarToast(id === "" ? "✅ Producto creado" : "✅ Producto actualizado");
+                cargarProductos();
+            } catch (e) { mostrarToast("❌ Error al guardar: " + e.message); }
+        }
+
+        // ── DELETE /api/productos/{id} ───────────────────────
+        async function eliminarProducto(id) {
+            if (!confirm("¿Eliminar producto ID " + id + "?")) return;
+            try {
+                const resp = await fetch(API_URL + "/api/productos/" + id, { method: "DELETE" });
+                if (!resp.ok) throw new Error("Código " + resp.status);
+                mostrarToast("🗑️ Producto eliminado");
+                cargarProductos();
+            } catch (e) { mostrarToast("❌ Error: " + e.message); }
+        }
+
+        function mostrarToast(msg) {
+            const t = document.getElementById("toast");
+            document.getElementById("toastMsg").textContent = msg;
+            t.className = "toast purple-toast show";
+            setTimeout(() => t.classList.remove("show"), 3500);
+        }
+
+        function mostrarApiMensaje(texto, tipo) {
+            const c = document.getElementById("apiMensaje");
+            c.textContent      = texto;
+            c.style.display    = "block";
+            c.style.background = tipo === "error" ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)";
+            c.style.color      = tipo === "error" ? "#ef4444" : "#4ade80";
+            c.style.border     = "1px solid " + (tipo === "error" ? "#ef4444" : "#4ade80");
+            setTimeout(() => { c.style.display = "none"; }, 5000);
+        }
+
+        document.getElementById("modalProducto").addEventListener("click", function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
+</body>
+</html>

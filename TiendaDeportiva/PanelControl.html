@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Panel</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta http-equiv="X-UA compatible" content="IE=Edge">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="shortcut icon" href="/img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="body_panel">
+
+    <!-- HEADER SUPERIOR -->
+    <header class="header">
+        <div class="logo">
+            <img class="Logo" src="/img/logo.png" alt="Logo">
+            <div class="text">
+                <h2>Inventario Samuel</h2>
+                <span>Gestión Deportiva</span>
+            </div>
+        </div>
+        <nav class="ACTIVE">
+            <a class="active" href="PanelControl.html">Panel</a>
+            <a class="active" href="Inventory.html">Inventario</a>
+            <a class="active" href="Procesos.html">Procesos</a>
+            <a class="active" href="Usuarios.html">Usuarios</a>
+        </nav>
+        <a href="Login.html">
+            <img class="out" src="/img/out.png" alt="Salir">
+        </a>
+    </header>
+
+    <main class="container">
+
+        <section class="title">
+            <h1>Panel de Control</h1>
+            <p>Resumen general de tu inventario deportivo</p>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <p>Ventas del Mes</p>
+                <h2 id="ventasMes">$7.800.000 COP</h2>
+                <span class="green">+12.5% vs mes anterior</span>
+            </div>
+            <div class="card">
+                <p>Productos en Stock</p>
+                <h2>1,247</h2>
+                <span class="green">+8.2% este mes</span>
+            </div>
+            <div class="card">
+                <p>Pedidos Totales</p>
+                <h2 id="pedidosTotales">342</h2>
+                <span class="green">+23% esta semana</span>
+            </div>
+            <div class="card">
+                <p>Tasa de Crecimiento</p>
+                <h2>18.4%</h2>
+                <span class="yellow">-2.1% vs trimestre</span>
+            </div>
+        </section>
+
+        <section class="main-grid">
+
+            <!-- GRÁFICO INTERACTIVO -->
+            <div class="box big">
+                <h3>Ventas Mensuales</h3>
+                <p style="color:#828c9a;font-size:13px;">Rendimiento vs Objetivo &nbsp;
+                    <span style="color:#00d4ff;font-size:11px;">↑ Se actualiza al registrar una nueva venta</span>
+                </p>
+                <div class="chart-container">
+                    <canvas id="ventasChart"></canvas>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:10px;">
+                    <span style="font-size:12px;color:#828c9a;display:flex;align-items:center;gap:5px;">
+                        <span style="width:10px;height:10px;background:cyan;border-radius:2px;display:inline-block;"></span>Real
+                    </span>
+                    <span style="font-size:12px;color:#828c9a;display:flex;align-items:center;gap:5px;">
+                        <span style="width:10px;height:10px;background:#6a5cff;border-radius:2px;display:inline-block;"></span>Objetivo
+                    </span>
+                </div>
+            </div>
+
+            <!-- ACCIONES RÁPIDAS -->
+            <div class="box">
+                <h3>Acciones Rápidas</h3>
+                <div class="actions">
+                    <a class="action" href="#" onclick="abrirModalVenta(event)" style="text-decoration:none;color:white;">🛒 Nueva Venta</a>
+                    <a class="action" href="Inventory.html" style="text-decoration:none;color:white;">📦 Añadir Stock</a>
+                    <a class="action" href="Usuarios.html" style="text-decoration:none;color:white;">👥 Nuevo Cliente</a>
+                    <a class="action" href="Procesos.html" style="text-decoration:none;color:white;">📊 Ver Reportes</a>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="bottom">
+
+            <div class="box">
+                <h3>Distribución por Categoría</h3>
+                <div class="pie"></div>
+                <ul class="lista">
+                    <li>🟣 Fútbol 35%</li>
+                    <li>🔵 Gimnasio 28%</li>
+                    <li>🟠 Calzado 22%</li>
+                    <li>🟢 Ropa 10%</li>
+                    <li>⚪ Tenis 5%</li>
+                </ul>
+            </div>
+
+            <div class="box">
+                <h3>Productos Top</h3>
+                <div class="product"><p>⚽ Balón Nike</p><span class="green">+18%</span></div>
+                <div class="product"><p>👕 Camiseta Puma</p><span class="green">+24%</span></div>
+                <div class="product"><p>👟 Zapatillas Adidas</p><span class="green">+15%</span></div>
+                <div class="product"><p>🚲 Bicicleta Spinning</p><span class="green">+42%</span></div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL NUEVA VENTA -->
+    <div class="venta-modal-overlay" id="modalVenta">
+        <div class="venta-modal">
+            <h3>🛒 Nueva Venta</h3>
+            <p class="modal-sub">Registra una venta — la gráfica se actualiza automáticamente</p>
+
+            <label>Mes de la venta</label>
+            <select id="ventaMes">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11" selected>Diciembre</option>
+            </select>
+
+            <label>Monto de la venta (COP)</label>
+            <input type="number" id="ventaMonto" placeholder="Ej: 500000" min="0">
+
+            <label>Producto vendido</label>
+            <input type="text" id="ventaProducto" placeholder="Ej: Balón Nike Premier">
+
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="cerrarModalVenta()">Cancelar</button>
+                <button class="btn-save"   onclick="registrarVenta()">Registrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast purple-toast" id="toast">
+        <span id="toastMsg">Venta registrada</span>
+    </div>
+
+    <script>
+        // ===== DATOS INICIALES =====
+        const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        let ventasData    = [3.2, 4.8, 5.6, 4.4, 6.2, 5.1, 7.4, 6.8, 8.1, 7.5, 8.5, 7.8];
+        const objetivoData = [4.0, 4.5, 5.0, 5.0, 5.5, 5.5, 6.5, 6.5, 7.5, 7.5, 8.0, 8.0];
+
+        // ===== CREAR GRÁFICA =====
+        const ctx = document.getElementById('ventasChart').getContext('2d');
+        const ventasChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [
+                    {
+                        label: 'Real',
+                        data: ventasData,
+                        backgroundColor: 'rgba(0,212,255,0.7)',
+                        borderColor: 'cyan',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Objetivo',
+                        data: objetivoData,
+                        backgroundColor: 'rgba(106,92,255,0.5)',
+                        borderColor: '#6a5cff',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 600, easing: 'easeInOutQuart' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: c => ' $' + (c.raw * 1000000).toLocaleString('es-CO') + ' COP'
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#828c9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: {
+                        ticks: { color: '#828c9a', font: { size: 11 }, callback: v => '$' + v + 'M' },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    }
+                }
+            }
+        });
+
+        // ===== MODAL =====
+        function abrirModalVenta(e) {
+            e.preventDefault();
+            document.getElementById('modalVenta').classList.add('active');
+        }
+
+        function cerrarModalVenta() {
+            document.getElementById('modalVenta').classList.remove('active');
+            document.getElementById('ventaMonto').value = '';
+            document.getElementById('ventaProducto').value = '';
+        }
+
+        function registrarVenta() {
+            const mesIdx   = parseInt(document.getElementById('ventaMes').value);
+            const monto    = parseFloat(document.getElementById('ventaMonto').value);
+            const producto = document.getElementById('ventaProducto').value.trim();
+
+            if (!monto || monto <= 0) {
+                mostrarToast('⚠️ Ingresa un monto válido');
+                return;
+            }
+
+            // Actualizar datos y gráfica
+            ventasData[mesIdx] = parseFloat((ventasData[mesIdx] + monto / 1000000).toFixed(2));
+            ventasChart.data.datasets[0].data = [...ventasData];
+            ventasChart.update();
+
+            // Actualizar tarjeta de ventas (mes actual = Diciembre = índice 11)
+            const montoActual = ventasData[11];
+            document.getElementById('ventasMes').textContent =
+                '$' + Math.round(montoActual * 1000000).toLocaleString('es-CO') + ' COP';
+
+            // Actualizar pedidos
+            const p = parseInt(document.getElementById('pedidosTotales').textContent);
+            document.getElementById('pedidosTotales').textContent = p + 1;
+
+            cerrarModalVenta();
+            mostrarToast('✅ Venta registrada en ' + meses[mesIdx] + (producto ? ': ' + producto : ''));
+        }
+
+        // ===== TOAST =====
+        function mostrarToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        document.getElementById('modalVenta').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalVenta();
+        });
+    </script>
+
+</body>
+</html>

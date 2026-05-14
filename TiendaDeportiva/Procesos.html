@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Procesos</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta http-equiv="X-UA compatible" content="IE=Edge">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="shortcut icon" href="/img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="body_procesos">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <img class="Logo" src="/img/logo.png" alt="Logo">
+            <div class="text">
+                <h2>Inventario Samuel</h2>
+                <span>Gestión Deportiva</span>
+            </div>
+        </div>
+        <nav>
+            <a href="PanelControl.html">Panel</a>
+            <a href="Inventory.html">Inventario</a>
+            <a href="Procesos.html">Procesos</a>
+            <a href="Usuarios.html">Usuarios</a>
+        </nav>
+        <a href="Login.html">
+            <img class="out" src="/img/out.png" alt="Salir">
+        </a>
+    </header>
+
+    <!-- CONTENIDO -->
+    <div class="proc-container">
+
+        <div class="proc-title">
+            <h1>Gestión de Procesos</h1>
+            <p>Controla las entradas y salidas de tu inventario deportivo</p>
+        </div>
+
+        <!-- ESTADÍSTICAS -->
+        <div class="proc-stats">
+
+            <div class="proc-card">
+                <div>
+                    <div class="pc-label">Entradas de Stock</div>
+                    <div class="pc-value" id="numEntradas">243</div>
+                    <div class="pc-badge green" id="badgeEntradas">+6% esta semana</div>
+                </div>
+                <div class="pc-icon teal">⬆️</div>
+            </div>
+
+            <div class="proc-card">
+                <div>
+                    <div class="pc-label">Salidas de Stock</div>
+                    <div class="pc-value" id="numSalidas">186</div>
+                    <div class="pc-badge red" id="badgeSalidas">+12% esta semana</div>
+                </div>
+                <div class="pc-icon orange">⬇️</div>
+            </div>
+
+            <div class="proc-card">
+                <div>
+                    <div class="pc-label">Movimientos Hoy</div>
+                    <div class="pc-value" id="numMovimientos">57</div>
+                    <div class="pc-badge blue">Tiempo real</div>
+                </div>
+                <div class="pc-icon blue">📋</div>
+            </div>
+
+        </div>
+
+        <!-- BOTONES REGISTRAR -->
+        <div class="proc-reg-btns">
+            <button class="btn-entrada" onclick="abrirModal('entrada')">
+                ⊕ Registrar Entrada
+            </button>
+            <button class="btn-salida" onclick="abrirModal('salida')">
+                ⊕ Registrar Salida
+            </button>
+        </div>
+
+        <!-- GRÁFICA + HISTORIAL -->
+        <div class="proc-grid">
+
+            <!-- GRÁFICA SEMANAL INTERACTIVA -->
+            <div class="box">
+                <h3>Actividad Semanal</h3>
+                <p>Entradas y salidas por día — se actualiza en tiempo real</p>
+                <div style="position:relative; height:180px;">
+                    <canvas id="procChart"></canvas>
+                </div>
+                <div class="proc-legend">
+                    <span><span class="dot" style="background:#22c55e;"></span> Entradas</span>
+                    <span><span class="dot" style="background:#f97316;"></span> Salidas</span>
+                </div>
+            </div>
+
+            <!-- HISTORIAL -->
+            <div class="box">
+                <h3>Historial de Actividad</h3>
+                <p>Últimos movimientos registrados</p>
+                <div id="historialList">
+
+                    <div class="hist-item entrada">
+                        <div class="hist-icon ent-bg">📦</div>
+                        <div class="hist-info">
+                            <h4>Balón de Fútbol Nike Premier</h4>
+                            <p>⊕ 30 unidades &nbsp;·&nbsp; ⏱ 10:30</p>
+                            <p>Pedido mensual</p>
+                            <p style="font-size:11px;color:#4a5568;">Por Samuel · 10 de marzo de 2026</p>
+                        </div>
+                        <div class="hist-badge ent-badge">Entrada</div>
+                    </div>
+
+                    <div class="hist-item salida">
+                        <div class="hist-icon sal-bg">📤</div>
+                        <div class="hist-info">
+                            <h4>Zapatillas Adidas Ultraboost</h4>
+                            <p>⊖ 5 unidades &nbsp;·&nbsp; ⏱ 09:15</p>
+                            <p>Venta directa</p>
+                            <p style="font-size:11px;color:#4a5568;">Por María · 10 de marzo de 2026</p>
+                        </div>
+                        <div class="hist-badge sal-badge">Salida</div>
+                    </div>
+
+                    <div class="hist-item entrada">
+                        <div class="hist-icon ent-bg">📦</div>
+                        <div class="hist-info">
+                            <h4>Camiseta Fútbol Colombia</h4>
+                            <p>⊕ 50 unidades &nbsp;·&nbsp; ⏱ 08:45</p>
+                            <p>Reposición de stock</p>
+                            <p style="font-size:11px;color:#4a5568;">Por Samuel · 10 de marzo de 2026</p>
+                        </div>
+                        <div class="hist-badge ent-badge">Entrada</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===== MODAL REGISTRO ===== -->
+    <div class="proc-modal-overlay" id="modalProc">
+        <div class="proc-modal">
+            <h3 id="modalTitulo">📦 Registrar Entrada</h3>
+            <p class="modal-sub" id="modalSub">Completa los datos para registrar el movimiento</p>
+
+            <label>Producto</label>
+            <input type="text" id="modalProducto" placeholder="Ej: Balón Nike Premier">
+
+            <label>Cantidad de unidades</label>
+            <input type="number" id="modalCantidad" placeholder="Ej: 20" min="1">
+
+            <label>Motivo</label>
+            <input type="text" id="modalMotivo" placeholder="Ej: Pedido mensual / Venta directa">
+
+            <label>Día de la semana</label>
+            <select id="modalDia">
+                <option value="0">Lunes</option>
+                <option value="1">Martes</option>
+                <option value="2">Miércoles</option>
+                <option value="3">Jueves</option>
+                <option value="4">Viernes</option>
+                <option value="5" selected>Sábado</option>
+            </select>
+
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button id="btnConfirmar" class="btn-confirm-ent" onclick="confirmarRegistro()">Confirmar Entrada</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <span id="toastMsg">Movimiento registrado</span>
+    </div>
+
+    <script>
+        // ===== DATOS GRÁFICA SEMANAL =====
+        const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        let dataEntradas = [42, 48, 37, 68, 62, 38];
+        let dataSalidas  = [28, 35, 32, 45, 47, 30];
+
+        // Crear gráfica
+        const ctx = document.getElementById('procChart').getContext('2d');
+        const procChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dias,
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: dataEntradas,
+                        backgroundColor: 'rgba(34,197,94,0.75)',
+                        borderColor: '#22c55e',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Salidas',
+                        data: dataSalidas,
+                        backgroundColor: 'rgba(249,115,22,0.75)',
+                        borderColor: '#f97316',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 600, easing: 'easeInOutQuart' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => ' ' + c.raw + ' unidades' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#828c9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#828c9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+
+        // ===== TIPO ACTUAL DEL MODAL =====
+        let tipoActual = 'entrada';
+
+        function abrirModal(tipo) {
+            tipoActual = tipo;
+            const esEntrada = tipo === 'entrada';
+
+            document.getElementById('modalTitulo').textContent = esEntrada ? '📦 Registrar Entrada' : '📤 Registrar Salida';
+            document.getElementById('modalSub').textContent     = esEntrada
+                ? 'Agrega unidades al inventario'
+                : 'Retira unidades del inventario';
+
+            const btn = document.getElementById('btnConfirmar');
+            btn.textContent = esEntrada ? 'Confirmar Entrada' : 'Confirmar Salida';
+            btn.className   = esEntrada ? 'btn-confirm-ent' : 'btn-confirm-sal';
+
+            // Limpiar campos
+            document.getElementById('modalProducto').value = '';
+            document.getElementById('modalCantidad').value = '';
+            document.getElementById('modalMotivo').value   = '';
+
+            document.getElementById('modalProc').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalProc').classList.remove('active');
+        }
+
+        function confirmarRegistro() {
+            const producto  = document.getElementById('modalProducto').value.trim();
+            const cantidad  = parseInt(document.getElementById('modalCantidad').value);
+            const motivo    = document.getElementById('modalMotivo').value.trim() || '—';
+            const diaIdx    = parseInt(document.getElementById('modalDia').value);
+
+            if (!producto) { mostrarToast('⚠️ Ingresa el nombre del producto', 'orange-toast'); return; }
+            if (!cantidad || cantidad < 1) { mostrarToast('⚠️ Ingresa una cantidad válida', 'orange-toast'); return; }
+
+            const esEntrada = tipoActual === 'entrada';
+
+            // Actualizar gráfica
+            if (esEntrada) {
+                dataEntradas[diaIdx] += cantidad;
+                procChart.data.datasets[0].data = [...dataEntradas];
+            } else {
+                dataSalidas[diaIdx] += cantidad;
+                procChart.data.datasets[1].data = [...dataSalidas];
+            }
+            procChart.update();
+
+            // Actualizar contadores
+            if (esEntrada) {
+                const v = parseInt(document.getElementById('numEntradas').textContent);
+                document.getElementById('numEntradas').textContent = v + cantidad;
+            } else {
+                const v = parseInt(document.getElementById('numSalidas').textContent);
+                document.getElementById('numSalidas').textContent  = v + cantidad;
+            }
+            const m = parseInt(document.getElementById('numMovimientos').textContent);
+            document.getElementById('numMovimientos').textContent = m + 1;
+
+            // Agregar al historial
+            agregarHistorial(esEntrada, producto, cantidad, motivo);
+
+            cerrarModal();
+            mostrarToast(
+                esEntrada
+                    ? '✅ Entrada registrada: ' + cantidad + ' uds de ' + producto
+                    : '📤 Salida registrada: ' + cantidad + ' uds de ' + producto,
+                esEntrada ? 'green-toast' : 'orange-toast'
+            );
+        }
+
+        function agregarHistorial(esEntrada, producto, cantidad, motivo) {
+            const lista = document.getElementById('historialList');
+            const ahora = new Date();
+            const hora  = ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+            const fecha = ahora.toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
+
+            const div = document.createElement('div');
+            div.className = 'hist-item ' + (esEntrada ? 'entrada' : 'salida');
+            div.innerHTML = `
+                <div class="hist-icon ${esEntrada ? 'ent-bg' : 'sal-bg'}">${esEntrada ? '📦' : '📤'}</div>
+                <div class="hist-info">
+                    <h4>${producto}</h4>
+                    <p>${esEntrada ? '⊕' : '⊖'} ${cantidad} unidades &nbsp;·&nbsp; ⏱ ${hora}</p>
+                    <p>${motivo}</p>
+                    <p style="font-size:11px;color:#4a5568;">Por Samuel · ${fecha}</p>
+                </div>
+                <div class="hist-badge ${esEntrada ? 'ent-badge' : 'sal-badge'}">${esEntrada ? 'Entrada' : 'Salida'}</div>
+            `;
+
+            // Insertar al inicio
+            lista.insertBefore(div, lista.firstChild);
+
+            // Limitar a 8 items
+            while (lista.children.length > 8) lista.removeChild(lista.lastChild);
+        }
+
+        function mostrarToast(msg, tipo) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.className = 'toast ' + (tipo || 'green-toast') + ' show';
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalProc').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
+
+    <script src="config.js"></script>
+    <script src="productos.js"></script>
+</body>
+</html>

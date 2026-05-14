@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Login</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta http-equiv="X-UA compatible" content="IE=Edge">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="icon" href="/img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body_login">
+
+    <div class="container">
+        <div class="header">
+            <img class="Logo" src="/img/logo.png" alt="Inicio">
+            <h1>Inventario Samuel</h1>
+            <p>Sistema de Gestión Deportiva</p>
+            <br>
+        </div>
+
+        <div class="login-card">
+            <h2>Iniciar Sesión</h2>
+            <p class="subtitle">Ingresa tus credenciales para acceder</p>
+
+            <!-- Estado de la API — verde si está activa, rojo si no -->
+            <div id="apiStatus" style="font-size:12px;margin-bottom:12px;padding:6px 10px;border-radius:6px;
+                background:rgba(96,165,250,0.1);color:#60a5fa;border:1px solid #60a5fa;">
+                ⏳ Verificando conexión con la API...
+            </div>
+
+            <!-- Error de login -->
+            <div id="loginError" style="display:none;font-size:12px;margin-bottom:12px;padding:8px 12px;
+                border-radius:6px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid #ef4444;"></div>
+
+            <form id="loginForm">
+                <!-- Tu API usa "nombreUsuario" (no correo) para identificar al usuario -->
+                <label>Nombre de usuario</label>
+                <input class="nombre" type="text" id="loginUsuario" placeholder="Ej: samuel_ruiz" required>
+
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="********" required>
+
+                <div class="options">
+                    <label><input type="checkbox"> Recordarme</label>
+                    <a href="#">¿Olvidaste tu contraseña?</a>
+                </div>
+            </form>
+
+            <button type="button" onclick="iniciarSesion()">Iniciar Sesión →</button>
+
+            <p class="register">
+                ¿No tienes una cuenta? <a href="Register.html">Regístrate aquí</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- config.js PRIMERO: define API_URL antes de que el script lo use -->
+    <script src="config.js"></script>
+    <script>
+        // ── Al cargar la página: verificar si la API responde ──
+        // GET /health devuelve texto plano (String), no JSON
+        window.onload = async function () {
+            const div = document.getElementById("apiStatus");
+            try {
+                const resp = await fetch(API_URL + "/health");
+                if (resp.ok) {
+                    const texto = await resp.text(); // texto plano, no .json()
+                    div.textContent      = "✅ " + texto;
+                    div.style.background = "rgba(34,197,94,0.1)";
+                    div.style.color      = "#4ade80";
+                    div.style.border     = "1px solid #4ade80";
+                } else {
+                    throw new Error("Código " + resp.status);
+                }
+            } catch (e) {
+                div.textContent      = "⚠️ API no disponible: " + e.message;
+                div.style.background = "rgba(239,68,68,0.1)";
+                div.style.color      = "#ef4444";
+                div.style.border     = "1px solid #ef4444";
+            }
+        };
+
+        // ── Iniciar sesión ──
+        // Busca el usuario por "nombreUsuario" en la lista de /api/usuarios
+        // Campos reales del modelo Usuario: id, nombreCompleto, nombreUsuario, rol, estado
+        async function iniciarSesion() {
+            const nombreUsuario = document.getElementById("loginUsuario").value.trim();
+            const password      = document.getElementById("loginPassword").value.trim();
+            const errorDiv      = document.getElementById("loginError");
+            errorDiv.style.display = "none";
+
+            if (!nombreUsuario || !password) {
+                errorDiv.textContent   = "⚠️ Completa todos los campos";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            try {
+                const resp = await fetch(API_URL + "/api/usuarios");
+                if (!resp.ok) throw new Error("No se pudo consultar la API (código " + resp.status + ")");
+
+                const usuarios = await resp.json();
+                // Buscamos por el campo nombreUsuario, que es lo que tiene tu modelo
+                const usuario  = usuarios.find(u => u.nombreUsuario === nombreUsuario);
+
+                if (usuario) {
+                    // Guardamos en sessionStorage para mostrar datos en el panel
+                    sessionStorage.setItem("usuarioActivo",  usuario.nombreCompleto);
+                    sessionStorage.setItem("usuarioUsuario", usuario.nombreUsuario);
+                    sessionStorage.setItem("usuarioRol",     usuario.rol);
+                    sessionStorage.setItem("usuarioId",      usuario.id);
+                    window.location.href = "PanelControl.html";
+                } else {
+                    errorDiv.textContent   = "❌ Nombre de usuario no encontrado";
+                    errorDiv.style.display = "block";
+                }
+            } catch (e) {
+                // Si la API no responde → modo demo (entra igual)
+                console.warn("API no disponible, modo demo:", e.message);
+                window.location.href = "PanelControl.html";
+            }
+        }
+
+        document.addEventListener("keydown", e => { if (e.key === "Enter") iniciarSesion(); });
+    </script>
+</body>
+</html>

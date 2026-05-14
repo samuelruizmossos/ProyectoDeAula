@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Usuarios</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta http-equiv="X-UA compatible" content="IE=Edge">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="shortcut icon" href="/img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body_usuarios">
+
+    <header class="header">
+        <div class="logo">
+            <img class="Logo" src="/img/logo.png" alt="Logo">
+            <div class="text">
+                <h2>Inventario Samuel</h2>
+                <span>Gestión Deportiva</span>
+            </div>
+        </div>
+        <nav>
+            <a href="PanelControl.html">Panel</a>
+            <a href="Inventory.html">Inventario</a>
+            <a href="Procesos.html">Procesos</a>
+            <a href="Usuarios.html" class="nav-current">Usuarios</a>
+        </nav>
+        <a href="Login.html">
+            <img class="out" src="/img/out.png" alt="Salir">
+        </a>
+    </header>
+
+    <div class="usr-container">
+
+        <div class="usr-title">
+            <h1>Gestión de Usuarios</h1>
+            <p>Administra los usuarios del sistema — conectado a la API</p>
+        </div>
+
+        <!-- Estadísticas calculadas con los datos reales de la API -->
+        <div class="usr-stats">
+            <div class="usr-card">
+                <div><div class="uc-label">Total Usuarios</div><div class="uc-value" id="totalUsuarios">—</div></div>
+                <div class="uc-icon neutral">👤</div>
+            </div>
+            <div class="usr-card">
+                <div><div class="uc-label">Activos</div><div class="uc-value" id="totalActivos">—</div></div>
+                <div class="uc-icon teal">✅</div>
+            </div>
+            <div class="usr-card">
+                <div><div class="uc-label">Administradores</div><div class="uc-value" id="totalAdmins">—</div></div>
+                <div class="uc-icon orange">🛡️</div>
+            </div>
+            <div class="usr-card">
+                <div><div class="uc-label">Empleados</div><div class="uc-value" id="totalEmpleados">—</div></div>
+                <div class="uc-icon neutral">👤</div>
+            </div>
+        </div>
+
+        <div class="usr-topbar">
+            <div class="usr-search">
+                <span>🔍</span>
+                <input type="text" id="searchInput"
+                    placeholder="Buscar por nombre completo o usuario..."
+                    oninput="filtrarUsuarios()">
+            </div>
+            <div class="usr-filters">
+                <select class="btn-filter" id="filtroRol" onchange="filtrarUsuarios()">
+                    <option value="">Todos los roles</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Empleado">Empleado</option>
+                </select>
+                <select class="btn-filter" id="filtroEstado" onchange="filtrarUsuarios()">
+                    <option value="">Todos los estados</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                </select>
+                <button class="btn-filter" onclick="cargarUsuarios()">🔄 Recargar</button>
+                <button class="btn-nuevo-usr" onclick="abrirModalNuevo()">+ Nuevo Usuario</button>
+            </div>
+        </div>
+
+        <div id="apiMensaje" style="display:none;padding:12px 20px;border-radius:8px;
+            margin-bottom:10px;font-size:13px;"></div>
+
+        <div class="usr-table-wrapper">
+            <table class="usr-table">
+                <thead>
+                    <tr>
+                        <th>USUARIO</th>
+                        <th>NOMBRE DE USUARIO</th>
+                        <th>ROL</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="usrTableBody">
+                    <tr><td colspan="5" style="text-align:center;color:#828c9a;padding:30px;">
+                        ⏳ Cargando usuarios desde la API...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO / EDITAR -->
+    <!-- Los campos coinciden EXACTAMENTE con Usuario.java:
+         nombreCompleto, nombreUsuario, rol, estado            -->
+    <div class="usr-modal-overlay" id="modalUsr">
+        <div class="usr-modal">
+            <h3 id="modalUsrTitulo">👤 Nuevo Usuario</h3>
+            <p class="modal-sub" id="modalUsrSub">Los datos se envían a la API al guardar</p>
+
+            <input type="hidden" id="usuarioId">
+
+            <label>Nombre completo</label>
+            <input type="text" id="usrNombreCompleto" placeholder="Ej: Samuel Ruiz">
+
+            <label>Nombre de usuario</label>
+            <input type="text" id="usrNombreUsuario" placeholder="Ej: samuel_ruiz">
+
+            <label>Rol</label>
+            <select id="usrRol">
+                <option value="Empleado">Empleado</option>
+                <option value="Administrador">Administrador</option>
+            </select>
+
+            <label>Estado</label>
+            <select id="usrEstado">
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-save"   onclick="guardarUsuario()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+    <!-- config.js PRIMERO: define API_URL -->
+    <script src="config.js"></script>
+    <script>
+        // Lista global con todos los usuarios de la API
+        let todosLosUsuarios = [];
+
+        window.onload = function () { cargarUsuarios(); };
+
+        // ── GET /api/usuarios ───────────────────────────────
+        async function cargarUsuarios() {
+            const tbody = document.getElementById("usrTableBody");
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#828c9a;padding:30px;">⏳ Cargando...</td></tr>';
+            try {
+                const resp     = await fetch(API_URL + "/api/usuarios");
+                if (!resp.ok) throw new Error("Error " + resp.status);
+                const usuarios = await resp.json();
+                todosLosUsuarios = usuarios;
+                actualizarContadores(usuarios);
+                renderTabla(usuarios);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#ef4444;padding:30px;">
+                    ⚠️ No se pudo conectar con la API.<br>
+                    <span style="font-size:12px;color:#828c9a;">
+                        Verifica que el servidor Java esté corriendo en localhost:8080
+                    </span>
+                </td></tr>`;
+                mostrarApiMensaje("❌ " + error.message, "error");
+            }
+        }
+
+        // Calcula las tarjetas de estadísticas usando los campos reales:
+        // estado: "Activo" / "Inactivo"    rol: "Administrador" / "Empleado"
+        function actualizarContadores(usuarios) {
+            document.getElementById("totalUsuarios").textContent  = usuarios.length;
+            document.getElementById("totalActivos").textContent   = usuarios.filter(u => u.estado === "Activo").length;
+            document.getElementById("totalAdmins").textContent    = usuarios.filter(u => u.rol === "Administrador").length;
+            document.getElementById("totalEmpleados").textContent = usuarios.filter(u => u.rol === "Empleado").length;
+        }
+
+        // Dibuja la tabla usando los campos reales de la API
+        function renderTabla(usuarios) {
+            const tbody = document.getElementById("usrTableBody");
+            tbody.innerHTML = "";
+            if (usuarios.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#828c9a;padding:30px;">No hay usuarios registrados.</td></tr>';
+                return;
+            }
+            usuarios.forEach(function (u) {
+                // Iniciales a partir de nombreCompleto
+                const iniciales   = u.nombreCompleto.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+                const avatarClass = u.rol === "Administrador" ? "adm" : "emp";
+                const rolClass    = u.rol === "Administrador" ? "role-admin" : "role-emp";
+                const estClass    = u.estado === "Activo" ? "status-active" : "status-inactive";
+
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>
+                        <div class="usr-cell">
+                            <div class="usr-avatar ${avatarClass}">${iniciales}</div>
+                            <div>
+                                <div class="usr-name">${u.nombreCompleto}</div>
+                                <div class="usr-uid">ID: ${u.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color:#828c9a;font-size:13px;">@${u.nombreUsuario}</td>
+                    <td><span class="role-pill ${rolClass}">${u.rol}</span></td>
+                    <td><span class="status-pill ${estClass}">${u.estado}</span></td>
+                    <td>
+                        <button class="usr-action-btn" onclick="abrirModalEditar(${u.id})">✏️ Editar</button>
+                        <button class="usr-action-btn" onclick="eliminarUsuario(${u.id})" style="color:#ef4444;">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+
+        // Filtra localmente por nombreCompleto, nombreUsuario, rol o estado
+        function filtrarUsuarios() {
+            const texto  = document.getElementById("searchInput").value.toLowerCase();
+            const rol    = document.getElementById("filtroRol").value;
+            const estado = document.getElementById("filtroEstado").value;
+
+            const filtrados = todosLosUsuarios.filter(u => {
+                const coincideTexto  = u.nombreCompleto.toLowerCase().includes(texto) ||
+                                       u.nombreUsuario.toLowerCase().includes(texto);
+                const coincideRol    = !rol    || u.rol    === rol;
+                const coincideEstado = !estado || u.estado === estado;
+                return coincideTexto && coincideRol && coincideEstado;
+            });
+            renderTabla(filtrados);
+        }
+
+        // ── MODAL NUEVO ─────────────────────────────────────
+        function abrirModalNuevo() {
+            document.getElementById("modalUsrTitulo").textContent  = "👤 Nuevo Usuario";
+            document.getElementById("modalUsrSub").textContent     = "Los datos se envían a la API al guardar";
+            document.getElementById("usuarioId").value             = "";
+            document.getElementById("usrNombreCompleto").value     = "";
+            document.getElementById("usrNombreUsuario").value      = "";
+            document.getElementById("usrRol").value                = "Empleado";
+            document.getElementById("usrEstado").value             = "Activo";
+            document.getElementById("modalUsr").classList.add("active");
+        }
+
+        // ── MODAL EDITAR — GET /api/usuarios/{id} ────────────
+        async function abrirModalEditar(id) {
+            try {
+                const resp = await fetch(API_URL + "/api/usuarios/" + id);
+                if (!resp.ok) throw new Error("No se encontró ID: " + id);
+                const u = await resp.json();
+                document.getElementById("modalUsrTitulo").textContent = "✏️ Editar Usuario (ID: " + id + ")";
+                document.getElementById("modalUsrSub").textContent    = "Modifica los campos y guarda";
+                document.getElementById("usuarioId").value            = u.id;
+                document.getElementById("usrNombreCompleto").value    = u.nombreCompleto;
+                document.getElementById("usrNombreUsuario").value     = u.nombreUsuario;
+                document.getElementById("usrRol").value               = u.rol;
+                document.getElementById("usrEstado").value            = u.estado;
+                document.getElementById("modalUsr").classList.add("active");
+            } catch (e) { mostrarToast("❌ " + e.message); }
+        }
+
+        function cerrarModal() { document.getElementById("modalUsr").classList.remove("active"); }
+
+        // ── POST /api/usuarios  ó  PUT /api/usuarios/{id} ───
+        // Enviamos los campos que define UsuarioDTO / Usuario.java:
+        // { nombreCompleto, nombreUsuario, rol, estado }
+        async function guardarUsuario() {
+            const id             = document.getElementById("usuarioId").value;
+            const nombreCompleto = document.getElementById("usrNombreCompleto").value.trim();
+            const nombreUsuario  = document.getElementById("usrNombreUsuario").value.trim();
+            const rol            = document.getElementById("usrRol").value;
+            const estado         = document.getElementById("usrEstado").value;
+
+            if (!nombreCompleto) { mostrarToast("⚠️ El nombre completo es obligatorio"); return; }
+            if (!nombreUsuario)  { mostrarToast("⚠️ El nombre de usuario es obligatorio"); return; }
+
+            const datos = { nombreCompleto, nombreUsuario, rol, estado };
+
+            try {
+                const url    = id === "" ? API_URL + "/api/usuarios" : API_URL + "/api/usuarios/" + id;
+                const metodo = id === "" ? "POST" : "PUT";
+                const resp   = await fetch(url, {
+                    method:  metodo,
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify(datos)
+                });
+                if (!resp.ok) { const t = await resp.text(); throw new Error(t); }
+                cerrarModal();
+                mostrarToast(id === "" ? "✅ Usuario creado" : "✅ Usuario actualizado");
+                cargarUsuarios();
+            } catch (e) { mostrarToast("❌ Error al guardar: " + e.message); }
+        }
+
+        // ── DELETE /api/usuarios/{id} ────────────────────────
+        async function eliminarUsuario(id) {
+            if (!confirm("¿Eliminar usuario ID " + id + "?")) return;
+            try {
+                const resp = await fetch(API_URL + "/api/usuarios/" + id, { method: "DELETE" });
+                if (!resp.ok) throw new Error("Código " + resp.status);
+                mostrarToast("🗑️ Usuario eliminado");
+                cargarUsuarios();
+            } catch (e) { mostrarToast("❌ Error: " + e.message); }
+        }
+
+        function mostrarToast(msg) {
+            const t = document.getElementById("toast");
+            document.getElementById("toastMsg").textContent = msg;
+            t.className = "toast purple-toast show";
+            setTimeout(() => t.classList.remove("show"), 3500);
+        }
+
+        function mostrarApiMensaje(texto, tipo) {
+            const c = document.getElementById("apiMensaje");
+            c.textContent      = texto;
+            c.style.display    = "block";
+            c.style.background = tipo === "error" ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)";
+            c.style.color      = tipo === "error" ? "#ef4444" : "#4ade80";
+            c.style.border     = "1px solid " + (tipo === "error" ? "#ef4444" : "#4ade80");
+            setTimeout(() => { c.style.display = "none"; }, 5000);
+        }
+
+        document.getElementById("modalUsr").addEventListener("click", function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
+</body>
+</html>

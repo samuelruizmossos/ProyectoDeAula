@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamuSports - Registro</title>
+    <meta name="author" content="Samuel Esteban Ruiz - SamuelM">
+    <meta name="description" content="Sistema de inventario para tienda deportiva">
+    <meta name="keywords" content="Sistema, Página, deportiva, inventario">
+    <link rel="shortcut icon" href="img/LOGO_16x.png" type="image/png" sizes="16x16">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="body_register">
+    <main>
+        <div class="container_register">
+            <div class="header">
+                <img class="Logo_register" src="/img/logo.png" alt="Inicio">
+                <h1>Regístrate</h1>
+                <p class="subtitle">Crea tu cuenta en el sistema</p>
+                <br>
+
+                <div class="login-card">
+                    <h2>Crear Cuenta</h2>
+                    <p class="subtitle_box">Los datos se guardan en la API automáticamente</p>
+
+                    <div id="regMensaje" style="display:none;font-size:12px;margin-bottom:12px;
+                        padding:8px 12px;border-radius:6px;"></div>
+
+                    <form id="regForm">
+                        <!-- Campos que coinciden EXACTAMENTE con tu modelo Usuario.java:
+                             nombreCompleto, nombreUsuario, rol, estado                  -->
+
+                        <label>Nombre completo</label>
+                        <input type="text" id="regNombreCompleto" placeholder="Ej: Samuel Ruiz">
+
+                        <label>Nombre de usuario</label>
+                        <input type="text" id="regNombreUsuario" placeholder="Ej: samuel_ruiz">
+
+                        <label>Rol</label>
+                        <select id="regRol" style="width:100%;padding:10px;border-radius:8px;
+                            border:none;background:#1a2636;color:white;outline:none;margin-bottom:0.5rem;">
+                            <option value="Empleado">Empleado</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+
+                        <label>Contraseña</label>
+                        <input type="password" id="regPassword" placeholder="Ingresar contraseña">
+
+                        <label>Repetir contraseña</label>
+                        <input type="password" id="regPassword2" placeholder="Confirmar contraseña">
+                    </form>
+
+                    <button type="button" onclick="registrarse()">Registrarse</button>
+
+                    <p class="register">
+                        ¿Ya tienes una cuenta? <a href="Login.html">Iniciar sesión</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- config.js PRIMERO -->
+    <script src="config.js"></script>
+    <script>
+        // ── POST /api/usuarios ──────────────────────────────
+        // Crea un usuario nuevo enviando los campos que define tu modelo:
+        // { nombreCompleto, nombreUsuario, rol, estado }
+        async function registrarse() {
+            const nombreCompleto = document.getElementById("regNombreCompleto").value.trim();
+            const nombreUsuario  = document.getElementById("regNombreUsuario").value.trim();
+            const rol            = document.getElementById("regRol").value;
+            const pass1          = document.getElementById("regPassword").value;
+            const pass2          = document.getElementById("regPassword2").value;
+
+            if (!nombreCompleto || !nombreUsuario || !pass1 || !pass2) {
+                mostrarMensaje("⚠️ Completa todos los campos", "error"); return;
+            }
+            if (pass1 !== pass2) {
+                mostrarMensaje("⚠️ Las contraseñas no coinciden", "error"); return;
+            }
+
+            // Objeto que coincide EXACTAMENTE con UsuarioDTO / Usuario.java
+            // Estado se pone "Activo" por defecto al registrarse
+            const datos = {
+                nombreCompleto: nombreCompleto,
+                nombreUsuario:  nombreUsuario,
+                rol:            rol,
+                estado:         "Activo"
+                // La API no maneja contraseña (proyecto educativo), no se envía
+            };
+
+            try {
+                const resp = await fetch(API_URL + "/api/usuarios", {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify(datos)
+                });
+
+                if (!resp.ok) {
+                    const errorTexto = await resp.text();
+                    throw new Error("Error " + resp.status + ": " + errorTexto);
+                }
+
+                mostrarMensaje("✅ ¡Cuenta creada! Redirigiendo al login...", "exito");
+                setTimeout(() => { window.location.href = "Login.html"; }, 2000);
+
+            } catch (e) {
+                mostrarMensaje("❌ Error al registrar: " + e.message, "error");
+            }
+        }
+
+        function mostrarMensaje(texto, tipo) {
+            const el = document.getElementById("regMensaje");
+            el.textContent      = texto;
+            el.style.display    = "block";
+            el.style.background = tipo === "error" ? "rgba(239,68,68,0.1)"  : "rgba(34,197,94,0.1)";
+            el.style.color      = tipo === "error" ? "#ef4444"               : "#4ade80";
+            el.style.border     = "1px solid " + (tipo === "error" ? "#ef4444" : "#4ade80");
+        }
+
+        document.addEventListener("keydown", e => { if (e.key === "Enter") registrarse(); });
+    </script>
+</body>
+</html>
